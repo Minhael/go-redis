@@ -1,7 +1,6 @@
 package main
 
 import (
-	"benchmark-redis/model"
 	"benchmark-redis/redis"
 	"benchmark-redis/suite"
 	"context"
@@ -11,14 +10,22 @@ import (
 
 const (
 	connString   = "localhost:6379"
-	clientNumber = 300
+	clientNumber = 80
 )
 
 func main() {
 
+	//	Go Redis library increase number of clients internally if connected clients are not enough to serve the pressure
+	//	Connect to database
+	ctx := context.Background()
+	config := &redis.RedisConfig{
+		Ctx:        ctx,
+		ConnString: connString,
+	}
+
 	//	Pressure test with multiple clients
 	suite := &suite.CachePressure{
-		Cache:    connect,
+		Cache:    config.Connect(),
 		Parallel: clientNumber,
 	}
 
@@ -30,13 +37,4 @@ func main() {
 	} else {
 		fmt.Printf("Completed in %d ms size %d", elapsed, result)
 	}
-}
-
-func connect() model.Cache {
-	ctx := context.Background()
-	config := &redis.RedisConfig{
-		Ctx:        ctx,
-		ConnString: connString,
-	}
-	return config.Connect()
 }

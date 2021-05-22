@@ -15,23 +15,20 @@ const (
 )
 
 type CachePressure struct {
-	Cache    func() model.Cache
+	Cache    model.Cache
 	Parallel uint16
 }
 
 func (t *CachePressure) Execute() (count int64, err error) {
 
 	var (
-		c      model.Cache
 		ctx    context.Context
 		cancel context.CancelFunc
 		wg     sync.WaitGroup
 	)
 
 	//	Cache being test
-	c = t.Cache()
-	defer c.Close()
-	err = c.SetValue(KEY_CACHE_PRESSURE, VALUE_CACHE_PRESSURE)
+	err = t.Cache.SetValue(KEY_CACHE_PRESSURE, VALUE_CACHE_PRESSURE)
 	if err != nil {
 		return
 	}
@@ -70,19 +67,15 @@ type result struct {
 	err   error
 }
 
-func execute(ctx context.Context, cache func() model.Cache, clientNumber int) <-chan result {
+func execute(ctx context.Context, cache model.Cache, clientNumber int) <-chan result {
 	//	Goroutine result channel
 	ec := make(chan result)
 
 	go func() {
-		//	Use new connection
-		c := cache()
-		defer c.Close()
-
 		//	Generate tracffic on separate Goroutine
 		ec <- generate(ctx, 60*1000, 500, 500, func(elapsed int64) error {
 			fmt.Printf("t:[%d]: GET\n", clientNumber)
-			_, err := c.GetValue(KEY_CACHE_PRESSURE)
+			_, err := cache.GetValue(KEY_CACHE_PRESSURE)
 			return err
 		})
 		close(ec)
