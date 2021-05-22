@@ -9,8 +9,8 @@ import (
 )
 
 const (
-	connString   = "localhost:6379"
-	clientNumber = 80
+	connString  = "localhost:6379"
+	parallelism = 200
 )
 
 func main() {
@@ -27,7 +27,7 @@ func main() {
 	//	Pressure test with multiple clients
 	suite := &suite.CachePressure{
 		Cache:    cache,
-		Parallel: clientNumber,
+		Parallel: parallelism,
 	}
 
 	now := time.Now().UnixNano()

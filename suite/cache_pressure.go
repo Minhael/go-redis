@@ -77,10 +77,13 @@ func execute(ctx context.Context, cache model.Cache, clientNumber int) <-chan re
 
 	go func() {
 		//	Generate tracffic on separate Goroutine
-		ec <- generate(ctx, 60*1000, 500, 500, func(elapsed int64) error {
-			fmt.Printf("t:[%d]: GET\n", clientNumber)
-			_, err := cache.GetValue(KEY_CACHE_PRESSURE)
-			return err
+		ec <- generate(ctx, 60*1000, 500, 500, func(elapsed int64) result {
+			fmt.Printf("[t:%d]: GET\n", clientNumber)
+			value, err := cache.GetValue(KEY_CACHE_PRESSURE)
+			if value != VALUE_CACHE_PRESSURE {
+				return result{0, err}
+			}
+			return result{1, err}
 		})
 		close(ec)
 	}()
@@ -88,34 +91,37 @@ func execute(ctx context.Context, cache model.Cache, clientNumber int) <-chan re
 	return ec
 }
 
-func generate(ctx context.Context, durationMs uint32, periodMs uint32, flexMs uint32, exe func(int64) error) (result result) {
+func generate(ctx context.Context, durationMs uint32, periodMs uint32, flexMs uint32, exe func(int64) result) (rt result) {
 	var (
 		duration int64         = int64(durationMs) * int64(time.Millisecond)
 		period   time.Duration = time.Duration(periodMs) * time.Millisecond
 		elapsed  int64         = 0
 		now      int64         = time.Now().UnixNano()
 		delay    time.Duration = time.Duration(rand.Int31n(int32(flexMs)))
+		each     result
 	)
 
 	for elapsed < duration {
-		result.count += 1
+		rt.count += 1
 		now = time.Now().UnixNano()
 		delay = time.Duration(rand.Int31n(int32(flexMs)))
 
 		select {
 		case <-ctx.Done():
-			result.err = ctx.Err()
+			rt.err = ctx.Err()
 			break
 		case <-time.After(delay):
-			result.err = exe(elapsed)
-			if result.err != nil {
+			each = exe(elapsed)
+			rt.count += each.count
+			rt.err = each.err
+			if rt.err != nil {
 				break
 			}
 		}
 
 		select {
 		case <-ctx.Done():
-			result.err = ctx.Err()
+			rt.err = ctx.Err()
 			break
 		case <-time.After(max(0, period-delay)):
 			elapsed += time.Now().UnixNano() - now
