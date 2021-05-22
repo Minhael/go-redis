@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"math/rand"
+	"strconv"
 	"sync"
 	"time"
 )
@@ -19,12 +20,13 @@ type CachePressure struct {
 	Parallel uint16
 }
 
-func (t *CachePressure) Execute() (count int64, err error) {
+func (t *CachePressure) Execute() (result string, err error) {
 
 	var (
 		ctx    context.Context
 		cancel context.CancelFunc
 		wg     sync.WaitGroup
+		count  int64
 	)
 
 	//	Cache being test
@@ -58,6 +60,8 @@ func (t *CachePressure) Execute() (count int64, err error) {
 
 	//	Wait for all worker finish
 	wg.Wait()
+
+	result = strconv.FormatInt(count, 10)
 
 	return
 }
