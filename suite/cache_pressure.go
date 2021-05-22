@@ -1,9 +1,9 @@
 package suite
 
 import (
-	"benchmark-redis/model"
 	"context"
 	"fmt"
+	"go-redis/model"
 	"math/rand"
 	"strconv"
 	"sync"

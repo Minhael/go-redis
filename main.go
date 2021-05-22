@@ -1,10 +1,10 @@
 package main
 
 import (
-	"benchmark-redis/redis"
-	"benchmark-redis/suite"
 	"context"
 	"fmt"
+	"go-redis/redis"
+	"go-redis/suite"
 	"time"
 )
 

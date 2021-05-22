@@ -1,1 +1,1 @@
-# benchmark-redis-go
+# go-redis-go
