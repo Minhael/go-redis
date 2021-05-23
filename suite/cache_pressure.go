@@ -20,6 +20,10 @@ type CachePressure struct {
 	Parallel uint16
 }
 
+/**
+ * https://talks.golang.org/2012/concurrency.slide#53
+ * https://www.geeksforgeeks.org/using-waitgroup-in-golang/
+**/
 func (t *CachePressure) Execute() (result string, err error) {
 
 	var (
@@ -49,11 +53,11 @@ func (t *CachePressure) Execute() (result string, err error) {
 		go func() {
 			defer wg.Done()
 			//	Execute
-			result := <-execute(ctx, t.Cache, clientNumber)
-			count += result.count
-			if result.err != nil && result.err != context.Canceled {
+			rt := <-execute(ctx, t.Cache, clientNumber)
+			count += rt.count
+			if rt.err != nil && rt.err != context.Canceled {
 				cancel()
-				err = result.err
+				err = rt.err
 			}
 		}()
 	}
@@ -102,7 +106,6 @@ func generate(ctx context.Context, durationMs uint32, periodMs uint32, flexMs ui
 	)
 
 	for elapsed < duration {
-		rt.count += 1
 		now = time.Now().UnixNano()
 		delay = time.Duration(rand.Int31n(int32(flexMs)))
 
